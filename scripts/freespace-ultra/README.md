@@ -28,19 +28,13 @@ Everything here is in GiB, matching your torrent client. The Ultra panel shows G
 
 ## Releases with no announced size
 
-Not every tracker puts a size on the announce line. autobrr only works the real size out *after* external filters have run:
+Not every tracker puts a size on the announce line. What happens then depends on whether your filter has a size constraint.
 
-```go
-func (f *Filter) checkSizeFilter(r *Release) bool {
-	if r.Size == 0 {
-		r.AdditionalSizeCheckRequired = true
-		return true
-	}
-```
+**Set a `Min Size` or `Max Size` on the filter.** autobrr then fetches the real size out of band, from the `.torrent` file or from the tracker API on RED, OPS, GGN and BTN. That happens in `CheckFilter` before external filters run, so `{{.Size}}` is already correct by the time this script executes and the check is exact. This is the recommended setup.
 
-So `{{.Size}}` arrives here as `0`, and a `max_size` on the filter does not change that. Reading `0` as "needs nothing" would let any release through, so the script assumes `ASSUME_GIB`.
+**With no size constraint at all**, `checkSizeFilter` is never reached, nothing is fetched, and `{{.Size}}` arrives as `0`. Reading `0` as "needs nothing" would let any release through, so the script falls back to `ASSUME_GIB`.
 
-Set `ASSUME_GIB` to your filter's `max_size`. That is the largest release the filter can accept, so the guess is never too big or too small.
+Set `ASSUME_GIB` to the largest release you would accept on that filter. It is only used in that fallback case.
 
 ## Configuration
 
@@ -49,7 +43,7 @@ Edit the values at the top of the script:
 | Variable | Meaning |
 | --- | --- |
 | `BUFFER_GIB` | Headroom to keep free on top of the release. Default 50. |
-| `ASSUME_GIB` | Size assumed when the announce carries no size. Set to your filter's `max_size`. Default 50. |
+| `ASSUME_GIB` | Fallback size, used only when the filter has no size constraint and the announce carries no size. Default 50. |
 | `CHECK_PATH` | Any path on the filesystem you download to. Defaults to `$HOME`. |
 
 `BUFFER_GIB` and `ASSUME_GIB` can also be passed as arguments, so one copy can serve several filters:
@@ -58,7 +52,7 @@ Edit the values at the top of the script:
 freespace-ultra.sh [RELEASE_BYTES] [BUFFER_GIB] [ASSUME_GIB]
 ```
 
-For a filter with `max_size` of 30GB that should keep 100 GiB free, set **Exec Args** to `{{.Size}} 100 30`.
+To keep 100 GiB free on a filter, set **Exec Args** to `{{.Size}} 100`.
 
 ## Output
 
