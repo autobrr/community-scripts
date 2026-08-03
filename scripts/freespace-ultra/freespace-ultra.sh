@@ -63,9 +63,9 @@ is_number "$array_free_kib" || die "cannot read df for $check_path"
 free_kib=$quota_free_kib
 [ "$array_free_kib" -lt "$free_kib" ] && free_kib=$array_free_kib
 
-# autobrr resolves a missing size only after external filters run, so {{.Size}}
-# arrives as 0 for any tracker that leaves size off the announce line. Reading
-# that as "needs nothing" would let any release through.
+# {{.Size}} is 0 only when the announce carries no size AND the filter sets no
+# Min/Max Size. With one set, autobrr fetches the real size before external
+# filters run. Reading 0 as "needs nothing" would let any release through.
 if [ -z "$release_bytes" ] || [ "$release_bytes" = 0 ]; then
     need_kib=$(( assume_gib * kib_per_gib ))
     size_note="size unknown, assumed $assume_gib GiB"
