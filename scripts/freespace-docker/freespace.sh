@@ -2,7 +2,7 @@
 set -e
 
 reqSpace=250000000 # 250GB
-SPACE=$(df "/torrents" | awk 'END{print $4}')
+SPACE=$(df -P "/torrents" | awk 'END{print $4}')
 if [ "$SPACE" -le $reqSpace ]
 then
   echo "not enough space"
